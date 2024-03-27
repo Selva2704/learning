@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('pull from git') {
+            steps {
+                checkout scmGit(branches: [[name: '*/tasks']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Selva2704/learning.git']])
+                sh './test.sh'
+                }
+        }
+        stage('build') {
+            steps {
+                sh 'docker build -t  mynginx:v01 .'
+                }
+        }
+        stage('deploy') {
+            steps {
+                sh 'chmod +x ./deploy.sh'
+                sh './deploy.sh'
+                }
+        }
+        stage('docker push') {
+            steps {
+               withCredentials([string(credentialsId: 'selvadev27', variable: 'dockerpwd')]) {
+               sh 'docker login -u selvadev27 -p ${dockerpwd}'
+               sh 'chmod +x ./pushtohub.sh'
+               sh './pushtohub.sh'
+            }
+                }
+        }
+        
+           
+    }
+}
